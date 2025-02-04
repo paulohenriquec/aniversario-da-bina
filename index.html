@@ -16,6 +16,7 @@
             background-color: #fdf2f8;
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
 
         .container {
@@ -25,6 +26,8 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
 
         .header {
@@ -74,6 +77,7 @@
             cursor: pointer;
             font-size: 20px;
             color: #ec4899;
+            z-index: 2;
         }
 
         .prev:hover, .next:hover {
@@ -90,6 +94,7 @@
             transform: translateX(-50%);
             display: flex;
             gap: 8px;
+            z-index: 2;
         }
 
         .dot {
@@ -140,21 +145,117 @@
             color: #4b5563;
         }
 
+        /* Estilos para fogos de artifício */
+        .fireworks-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: scale(30);
+                opacity: 0;
+            }
+        }
+
+        @keyframes shoot {
+            0% {
+                transform: translateY(100vh);
+            }
+            100% {
+                transform: translateY(10vh);
+            }
+        }
+
+        .celebrate {
+            display: block !important;
+            animation: shoot 1s ease-out forwards;
+        }
+
+        .celebrate .firework {
+            animation: explode 1s ease-out forwards;
+        }
+
+        .music-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #ec4899;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 10000;
+            display: none;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .music-control:hover {
+            background: #db2777;
+            transform: scale(1.05);
+        }
+
+        .birthday-title {
+            font-size: 3rem;
+            color: #ec4899;
+            text-align: center;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
         @media (max-width: 640px) {
             .countdown-container {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .birthday-title {
+                font-size: 2rem;
             }
         }
     </style>
 </head>
 <body>
+    <div class="fireworks-container" id="fireworksContainer"></div>
+    <button class="music-control" id="musicControl">🔇 Música</button>
+    <audio id="birthdayMusic" loop>
+        <source src="path-to-your-music.mp3" type="audio/mpeg">
+    </audio>
+
     <div class="container">
         <div class="header">
             <h1>❤️ Contagem para o Aniversário ❤️</h1>
         </div>
 
         <div class="slideshow">
-            <!-- As imagens serão adicionadas via JavaScript -->
             <button class="prev">&lt;</button>
             <button class="next">&gt;</button>
             <div class="dots"></div>
@@ -188,7 +289,7 @@
 
     <script>
         // Configurações
-        const birthdayDate = new Date('2025-02-25'); // Altere para a data do aniversário
+        const birthdayDate = new Date('2025-02-04'); // Altere para a data do aniversário
         const photos = [
             '/api/placeholder/800/400',
             '/api/placeholder/800/400',
@@ -235,13 +336,65 @@
             dots[currentSlide].classList.add('active');
         }
 
-        document.querySelector('.prev').onclick = () => goToSlide(currentSlide - 1);
-        document.querySelector('.next').onclick = () => goToSlide(currentSlide + 1);
+        // Função para criar fogos de artifício
+        function createFirework() {
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            
+            // Posição aleatória na tela
+            const left = Math.random() * 100;
+            firework.style.left = `${left}%`;
+            
+            // Cor aleatória
+            const colors = ['#ff0', '#f0f', '#0ff', '#ff4', '#4ff', '#f44', '#4f4', '#44f'];
+            firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            return firework;
+        }
 
-        // Troca automática de slides
-        setInterval(() => goToSlide(currentSlide + 1), 5000);
+        // Função para iniciar a celebração
+        function startCelebration() {
+            const container = document.getElementById('fireworksContainer');
+            const musicControl = document.getElementById('musicControl');
+            const music = document.getElementById('birthdayMusic');
+            
+            container.style.display = 'block';
+            musicControl.style.display = 'block';
+            
+            // Criar fogos de artifício continuamente
+            setInterval(() => {
+                const firework = createFirework();
+                container.appendChild(firework);
+                firework.classList.add('celebrate');
+                
+                // Remover após a animação
+                setTimeout(() => {
+                    firework.remove();
+                }, 1000);
+            }, 300);
 
-        // Contagem regressiva
+            // Controle de música
+            musicControl.addEventListener('click', () => {
+                if (music.paused) {
+                    music.play();
+                    musicControl.textContent = '🔊 Música';
+                } else {
+                    music.pause();
+                    musicControl.textContent = '🔇 Música';
+                }
+            });
+
+            // Substituir contagem regressiva por mensagem de parabéns
+            document.querySelector('.countdown-container').innerHTML = `
+                <div style="grid-column: span 4; text-align: center;">
+                    <h2 class="birthday-title">
+                        🎉 Feliz Aniversário! 🎉
+                    </h2>
+                </div>
+            `;
+        }
+
+        // Contagem regressiva e verificação de aniversário
         function updateCountdown() {
             const now = new Date();
             const difference = birthdayDate - now;
@@ -256,8 +409,23 @@
                 document.getElementById('hours').textContent = String(hours).padStart(2, '0');
                 document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
                 document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+            } else {
+                // Verificar se é o dia do aniversário
+                const isToday = 
+                    now.getDate() === birthdayDate.getDate() &&
+                    now.getMonth() === birthdayDate.getMonth();
+                
+                if (isToday && !document.querySelector('.birthday-title')) {
+                    startCelebration();
+                }
             }
         }
+
+        document.querySelector('.prev').onclick = () => goToSlide(currentSlide - 1);
+        document.querySelector('.next').onclick = () => goToSlide(currentSlide + 1);
+
+        // Troca automática de slides
+        setInterval(() => goToSlide(currentSlide + 1), 5000);
 
         // Atualizar contagem regressiva a cada segundo
         setInterval(updateCountdown, 1000);
