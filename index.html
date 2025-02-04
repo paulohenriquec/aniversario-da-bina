@@ -158,44 +158,27 @@
         }
 
         .firework {
-            position: absolute;
+            position: fixed;
             width: 10px;
             height: 10px;
             border-radius: 50%;
+            animation: firework 1.5s ease-out forwards;
         }
 
-        @keyframes explode {
+        @keyframes firework {
             0% {
-                transform: scale(1);
+                transform: translate(50vw, 100vh) scale(1);
                 opacity: 1;
             }
             50% {
                 opacity: 1;
             }
             100% {
-                transform: scale(30);
+                transform: translate(var(--x), var(--y)) scale(0);
                 opacity: 0;
             }
         }
-
-        @keyframes shoot {
-            0% {
-                transform: translateY(100vh);
-            }
-            100% {
-                transform: translateY(10vh);
-            }
-        }
-
-        .celebrate {
-            display: block !important;
-            animation: shoot 1s ease-out forwards;
-        }
-
-        .celebrate .firework {
-            animation: explode 1s ease-out forwards;
-        }
-
+    
         .music-control {
             position: fixed;
             bottom: 20px;
@@ -207,40 +190,90 @@
             border-radius: 20px;
             cursor: pointer;
             z-index: 10000;
-            display: none;
             font-size: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
+            display: none;
         }
-
-        .music-control:hover {
-            background: #db2777;
-            transform: scale(1.05);
+    
+        .show-control {
+            display: block !important;
         }
-
-        .birthday-title {
-            font-size: 3rem;
-            color: #ec4899;
-            text-align: center;
-            margin: 20px 0;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        @media (max-width: 640px) {
-            .countdown-container {
-                grid-template-columns: repeat(2, 1fr);
+            @keyframes explode {
+                0% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 1;
+                }
+                100% {
+                    transform: scale(30);
+                    opacity: 0;
+                }
             }
-            
+    
+            @keyframes shoot {
+                0% {
+                    transform: translateY(100vh);
+                }
+                100% {
+                    transform: translateY(10vh);
+                }
+            }
+    
+            .celebrate {
+                display: block !important;
+                animation: shoot 1s ease-out forwards;
+            }
+    
+            .celebrate .firework {
+                animation: explode 1s ease-out forwards;
+            }
+    
+            .music-control {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #ec4899;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 20px;
+                cursor: pointer;
+                z-index: 10000;
+                display: none;
+                font-size: 16px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                transition: transform 0.2s;
+            }
+    
+            .music-control:hover {
+                background: #db2777;
+                transform: scale(1.05);
+            }
+    
             .birthday-title {
-                font-size: 2rem;
+                font-size: 3rem;
+                color: #ec4899;
+                text-align: center;
+                margin: 20px 0;
+                animation: pulse 2s infinite;
             }
-        }
+    
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+    
+            @media (max-width: 640px) {
+                .countdown-container {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+                
+                .birthday-title {
+                    font-size: 2rem;
+                }
+            }
     </style>
 </head>
 <body>
@@ -341,13 +374,17 @@
             const firework = document.createElement('div');
             firework.className = 'firework';
             
-            // Posição aleatória na tela
-            const left = Math.random() * 100;
-            firework.style.left = `${left}%`;
+            // Posição aleatória
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * (window.innerHeight * 0.7); // 70% da altura da tela
             
             // Cor aleatória
             const colors = ['#ff0', '#f0f', '#0ff', '#ff4', '#4ff', '#f44', '#4f4', '#44f'];
             firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Define a posição final
+            firework.style.setProperty('--x', `${x}px`);
+            firework.style.setProperty('--y', `${y}px`);
             
             return firework;
         }
@@ -358,33 +395,35 @@
             const musicControl = document.getElementById('musicControl');
             const music = document.getElementById('birthdayMusic');
             
-            container.style.display = 'block';
-            musicControl.style.display = 'block';
+            // Mostra o controle de música
+            musicControl.classList.add('show-control');
             
-            // Criar fogos de artifício continuamente
-            setInterval(() => {
+            // Inicia os fogos
+            function launchFirework() {
                 const firework = createFirework();
-                container.appendChild(firework);
-                firework.classList.add('celebrate');
+                document.body.appendChild(firework);
                 
-                // Remover após a animação
-                setTimeout(() => {
+                // Remove o fogo após a animação
+                firework.addEventListener('animationend', () => {
                     firework.remove();
-                }, 1000);
-            }, 300);
-
-            // Controle de música
+                });
+            }
+            
+            // Lança fogos a cada 300ms
+            setInterval(launchFirework, 300);
+            
+            // Configura o controle de música
             musicControl.addEventListener('click', () => {
                 if (music.paused) {
-                    music.play();
+                    music.play().catch(e => console.log('Erro ao tocar música:', e));
                     musicControl.textContent = '🔊 Música';
                 } else {
                     music.pause();
                     musicControl.textContent = '🔇 Música';
                 }
             });
-
-            // Substituir contagem regressiva por mensagem de parabéns
+            
+            // Atualiza a mensagem
             document.querySelector('.countdown-container').innerHTML = `
                 <div style="grid-column: span 4; text-align: center;">
                     <h2 class="birthday-title">
@@ -431,5 +470,7 @@
         setInterval(updateCountdown, 1000);
         updateCountdown();
     </script>
+
+    <button onclick="startCelebration()" style="position: fixed; bottom: 20px; left: 20px; padding: 10px;">Testar Animações</button>
 </body>
 </html>
