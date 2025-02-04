@@ -43,8 +43,9 @@
 
         .slideshow {
             position: relative;
-            height: 400px;
+            height: 300px; /* Altura reduzida */
             overflow: hidden;
+            margin: 20px 0;
         }
 
         .slide {
@@ -53,16 +54,19 @@
             height: 100%;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
+            display: none; /* Adicionado */
         }
 
         .slide.active {
             opacity: 1;
+            display: block; /* Adicionado */
         }
-
+        
         .slide img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain; /* Alterado de 'cover' para 'contain' */
+            background-color: #f8f8f8; /* Fundo para imagens menores */
         }
 
         .prev, .next {
@@ -446,19 +450,29 @@
         const slideshow = document.querySelector('.slideshow');
         const dotsContainer = document.querySelector('.dots');
 
+
+        slideshow.innerHTML = '';
+        dotsContainer.innerHTML = '';
+        
         // Criar slides
         photos.forEach((photo, index) => {
+            // Criar slide
             const slide = document.createElement('div');
             slide.className = `slide ${index === 0 ? 'active' : ''}`;
             
+            // Criar e configurar imagem
             const img = document.createElement('img');
             img.src = photo;
             img.alt = `Foto ${index + 1}`;
+            img.onerror = () => {
+                console.log(`Erro ao carregar imagem: ${photo}`);
+                img.src = 'caminho/para/imagem/fallback.jpg'; // Imagem de fallback
+            };
             
             slide.appendChild(img);
-            slideshow.insertBefore(slide, slideshow.firstChild);
-
-            // Criar dots
+            slideshow.appendChild(slide);
+        
+            // Criar indicador (dot)
             const dot = document.createElement('button');
             dot.className = `dot ${index === 0 ? 'active' : ''}`;
             dot.onclick = () => goToSlide(index);
@@ -470,14 +484,43 @@
             const slides = document.querySelectorAll('.slide');
             const dots = document.querySelectorAll('.dot');
             
+            // Remover classes active
             slides[currentSlide].classList.remove('active');
             dots[currentSlide].classList.remove('active');
             
+            // Calcular novo índice
             currentSlide = (n + slides.length) % slides.length;
             
+            // Adicionar classes active
             slides[currentSlide].classList.add('active');
             dots[currentSlide].classList.add('active');
         }
+        
+        // Botões de navegação
+        document.querySelector('.prev').onclick = () => {
+            goToSlide(currentSlide - 1);
+        };
+        
+        document.querySelector('.next').onclick = () => {
+            goToSlide(currentSlide + 1);
+        };
+        
+        // Troca automática de slides
+        let slideInterval = setInterval(() => {
+            goToSlide(currentSlide + 1);
+        }, 5000);
+        
+        // Parar a troca automática quando o mouse estiver sobre o slideshow
+        slideshow.addEventListener('mouseenter', () => {
+            clearInterval(slideInterval);
+        });
+        
+        // Retomar a troca automática quando o mouse sair
+        slideshow.addEventListener('mouseleave', () => {
+            slideInterval = setInterval(() => {
+                goToSlide(currentSlide + 1);
+            }, 5000);
+        });
 
         // Função para criar fogos de artifício
         function createFirework() {
