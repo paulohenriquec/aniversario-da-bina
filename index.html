@@ -146,8 +146,7 @@
         }
 
         /* Estilos para fogos de artifício */
-        .fireworks-container {
-            display: none;
+        .firework-container {
             position: fixed;
             top: 0;
             left: 0;
@@ -158,12 +157,115 @@
         }
 
         .firework {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            animation: firework 1.5s ease-out forwards;
+            position: absolute;
+            bottom: -10px;
         }
+
+        .firework::before {
+        content: '';
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background-color: currentColor;
+        box-shadow: 0 0 10px currentColor,
+                    0 0 20px currentColor,
+                    0 0 30px currentColor;
+        }
+
+    @keyframes fireworkTrail {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh);
+            opacity: 0;
+        }
+    }
+
+    @keyframes explosion {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(30);
+            opacity: 0;
+        }
+    }
+
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        transform-origin: center;
+    }
+
+    @keyframes particle {
+        0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(var(--tx), var(--ty)) scale(0);
+            opacity: 0;
+        }
+    }
+
+    .sparkle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background-color: white;
+        border-radius: 50%;
+        animation: sparkle 1s linear infinite;
+        pointer-events: none;
+    }
+
+    @keyframes sparkle {
+        0%, 100% { opacity: 0; }
+        50% { opacity: 1; }
+    }
+
+    .birthday-title {
+        animation: colorCycle 4s linear infinite;
+        background: linear-gradient(90deg, 
+            #ff0000, #ff7f00, #ffff00, #00ff00, 
+            #0000ff, #4b0082, #8f00ff, #ff0000);
+        background-size: 200% auto;
+        color: transparent;
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+
+    @keyframes colorCycle {
+        0% { background-position: 0% center; }
+        100% { background-position: 200% center; }
+    }
+
+    .celebrating .countdown-container {
+        animation: bounce 1s ease infinite;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .music-control {
+        animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
 
         @keyframes firework {
             0% {
@@ -371,67 +473,120 @@
 
         // Função para criar fogos de artifício
         function createFirework() {
+            const colors = [
+                '#ff0000', '#ff7f00', '#ffff00', '#00ff00',
+                '#0000ff', '#4b0082', '#8f00ff', '#ff69b4',
+                '#00ffff', '#ff00ff'
+            ];
+    
             const firework = document.createElement('div');
             firework.className = 'firework';
-            
-            // Posição aleatória
-            const x = Math.random() * window.innerWidth;
-            const y = Math.random() * (window.innerHeight * 0.7); // 70% da altura da tela
-            
-            // Cor aleatória
-            const colors = ['#ff0', '#f0f', '#0ff', '#ff4', '#4ff', '#f44', '#4f4', '#44f'];
-            firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            
-            // Define a posição final
-            firework.style.setProperty('--x', `${x}px`);
-            firework.style.setProperty('--y', `${y}px`);
-            
+            firework.style.left = Math.random() * 100 + 'vw';
+            firework.style.color = colors[Math.floor(Math.random() * colors.length)];
+            firework.style.animation = 'fireworkTrail 1s ease-out forwards';
+    
+            // Cria a explosão
+            firework.addEventListener('animationend', () => {
+                createExplosion(firework.offsetLeft, firework.offsetTop);
+                firework.remove();
+            });
+    
             return firework;
         }
-
-        // Função para iniciar a celebração
-        function startCelebration() {
-            const container = document.getElementById('fireworksContainer');
-            const musicControl = document.getElementById('musicControl');
-            const music = document.getElementById('birthdayMusic');
+    
+        function createExplosion(x, y) {
+        const particles = 32;
+        const container = document.querySelector('.firework-container');
+        
+        for (let i = 0; i < particles; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
             
-            // Mostra o controle de música
-            musicControl.classList.add('show-control');
+            const angle = (i * 360 / particles) * Math.PI / 180;
+            const velocity = 50 + Math.random() * 50;
+            const tx = Math.cos(angle) * velocity;
+            const ty = Math.sin(angle) * velocity;
             
-            // Inicia os fogos
-            function launchFirework() {
-                const firework = createFirework();
-                document.body.appendChild(firework);
-                
-                // Remove o fogo após a animação
-                firework.addEventListener('animationend', () => {
-                    firework.remove();
-                });
-            }
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            particle.style.backgroundColor = getRandomColor();
+            particle.style.setProperty('--tx', tx + 'px');
+            particle.style.setProperty('--ty', ty + 'px');
+            particle.style.animation = 'particle 1s ease-out forwards';
             
-            // Lança fogos a cada 300ms
-            setInterval(launchFirework, 300);
-            
-            // Configura o controle de música
-            musicControl.addEventListener('click', () => {
-                if (music.paused) {
-                    music.play().catch(e => console.log('Erro ao tocar música:', e));
-                    musicControl.textContent = '🔊 Música';
-                } else {
-                    music.pause();
-                    musicControl.textContent = '🔇 Música';
-                }
-            });
-            
-            // Atualiza a mensagem
-            document.querySelector('.countdown-container').innerHTML = `
-                <div style="grid-column: span 4; text-align: center;">
-                    <h2 class="birthday-title">
-                        🎉 Feliz Aniversário! 🎉
-                    </h2>
-                </div>
-            `;
+            container.appendChild(particle);
+            particle.addEventListener('animationend', () => particle.remove());
         }
+
+        // Adiciona brilhos
+        for (let i = 0; i < 10; i++) {
+            setTimeout(() => createSparkle(x, y), i * 100);
+        }
+    }
+
+        
+
+       function createSparkle(x, y) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.left = (x + Math.random() * 100 - 50) + 'px';
+        sparkle.style.top = (y + Math.random() * 100 - 50) + 'px';
+        document.body.appendChild(sparkle);
+        
+        setTimeout(() => sparkle.remove(), 1000);
+    }
+
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    function startCelebration() {
+        const container = document.querySelector('.firework-container') || 
+            document.createElement('div');
+        container.className = 'firework-container';
+        document.body.appendChild(container);
+
+        const musicControl = document.getElementById('musicControl');
+        const music = document.getElementById('birthdayMusic');
+        
+        musicControl.style.display = 'block';
+        document.body.classList.add('celebrating');
+
+        // Lança fogos de artifício em intervalos aleatórios
+        setInterval(() => {
+            if (Math.random() > 0.5) {
+                const firework = createFirework();
+                container.appendChild(firework);
+            }
+        }, 200);
+
+        // Controle de música com efeito visual
+        musicControl.addEventListener('click', () => {
+            if (music.paused) {
+                music.play();
+                musicControl.textContent = '🔊 Música';
+                musicControl.style.transform = 'scale(1.2)';
+            } else {
+                music.pause();
+                musicControl.textContent = '🔇 Música';
+                musicControl.style.transform = 'scale(1)';
+            }
+        });
+
+        // Atualiza a mensagem com animação
+        document.querySelector('.countdown-container').innerHTML = `
+            <div style="grid-column: span 4; text-align: center;">
+                <h2 class="birthday-title" style="font-size: 3rem; margin: 20px 0;">
+                    🎉 Feliz Aniversário! 🎉
+                </h2>
+            </div>
+        `;
+    }
 
         // Contagem regressiva e verificação de aniversário
         function updateCountdown() {
