@@ -324,42 +324,66 @@
 
         function initializeSlideshow() {
             const slideshow = document.querySelector('.slideshow');
-            const dotsContainer = document.querySelector('.dots');
-
-            // Limpar conteúdo existente
-            slideshow.innerHTML = `
+            
+            // Manter apenas os botões e dots originais
+            const controls = `
                 <button class="prev" aria-label="Foto anterior">&lt;</button>
                 <button class="next" aria-label="Próxima foto">&gt;</button>
                 <div class="dots"></div>
             `;
-
-            const dots = slideshow.querySelector('.dots');
-            dots.innerHTML = '';
-
+            
+            // Limpar completamente o slideshow
+            slideshow.innerHTML = controls;
+            
             // Criar slides
             photos.forEach((photo, index) => {
+                // Criar slide
                 const slide = document.createElement('div');
                 slide.className = `slide ${index === 0 ? 'active' : ''}`;
                 
+                // Criar imagem
                 const img = document.createElement('img');
                 img.src = photo;
                 img.alt = `Foto ${index + 1}`;
                 
+                // Adicionar imagem ao slide
                 slide.appendChild(img);
+                
+                // Adicionar slide ao slideshow (antes dos controles)
                 slideshow.insertBefore(slide, slideshow.firstChild);
-
-                // Criar dot
+            });
+            
+            // Criar dots
+            const dotsContainer = slideshow.querySelector('.dots');
+            photos.forEach((_, index) => {
                 const dot = document.createElement('button');
                 dot.className = `dot ${index === 0 ? 'active' : ''}`;
-                dot.onclick = () => goToSlide(index);
-                dots.appendChild(dot);
+                dot.onclick = () => {
+                    clearInterval(slideInterval); // Para o slideshow automático
+                    goToSlide(index);
+                    startSlideshow(); // Reinicia o slideshow automático
+                };
+                dotsContainer.appendChild(dot);
             });
-
+        
             // Configurar navegação
-            document.querySelector('.prev').onclick = () => goToSlide(currentSlide - 1);
-            document.querySelector('.next').onclick = () => goToSlide(currentSlide + 1);
-
-            // Iniciar slideshow automático
+            const prevButton = slideshow.querySelector('.prev');
+            const nextButton = slideshow.querySelector('.next');
+            
+            prevButton.onclick = () => {
+                clearInterval(slideInterval);
+                goToSlide(currentSlide - 1);
+                startSlideshow();
+            };
+            
+            nextButton.onclick = () => {
+                clearInterval(slideInterval);
+                goToSlide(currentSlide + 1);
+                startSlideshow();
+            };
+        
+            // Iniciar o slideshow automático
+            currentSlide = 0;
             startSlideshow();
         }
 
@@ -367,7 +391,9 @@
             if (slideInterval) {
                 clearInterval(slideInterval);
             }
-            slideInterval = setInterval(() => goToSlide(currentSlide + 1), 3000);
+            slideInterval = setInterval(() => {
+                goToSlide(currentSlide + 1);
+            }, 5000); // 5 segundos entre cada slide
         }
 
         function goToSlide(n) {
